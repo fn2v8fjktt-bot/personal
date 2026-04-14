@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>洛克王国世界刷闪分析</title>
+<style>
+body {
+  margin: 0;
+  font-family: "Microsoft YaHei", sans-serif;
+  background-color: #FFDB5C;
+  color: #333;
+}
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+h1 {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+}
+.new-pool-btn {
+  display: block;
+  width: 100%;
+  background-color: #000;
+  color: white;
+  text-align: center;
+  padding: 12px;
+  font-size: 1em;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+.pool-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+.pool-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.pool-title {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+.pool-total {
+  font-size: 0.9em;
+  color: #3C3576;
+}
+.pool-body {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  transition: max-height 0.3s ease;
+  overflow: hidden;
+}
+.pool-btn {
+  background-color: #FFE77A;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+}
+.entry-delete {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #000;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+}
+.empty-state {
+  background-color: #FFE77A;
+  padding: 20px;
+  text-align: center;
+  border-radius: 12px;
+  font-size: 1em;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>洛克王国世界刷闪分析</h1>
+  <div class="new-pool-btn" id="newPoolBtn">新建卡池 +</div>
+  <div id="poolContainer">
+    <div class="empty-state" id="emptyState">
+      当前还没有卡池记录<br>快点击上方“新建卡池”去记录吧
+    </div>
+  </div>
+</div>
+
+<script>
+const poolContainer = document.getElementById('poolContainer');
+const newPoolBtn = document.getElementById('newPoolBtn');
+const emptyState = document.getElementById('emptyState');
+let isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+// 新建卡池
+function createPool(name) {
+  const card = document.createElement('div');
+  card.className = 'pool-card';
+  
+  card.innerHTML = `
+    <div class="pool-header">
+      <span class="pool-title">${name}</span>
+      <span class="pool-total">共计0/80</span>
+    </div>
+    <div class="pool-body"></div>
+    <div style="margin-top:10px;">
+      <button class="pool-btn new-btn" onclick="addEntry(this)">新建</button>
+    </div>
+  `;
+  
+  poolContainer.appendChild(card);
+  emptyState.style.display = 'none';
+
+  const header = card.querySelector('.pool-header');
+  const body = card.querySelector('.pool-body');
+  const totalLabel = card.querySelector('.pool-total');
+
+  // 卡池收起/展开
+  header.addEventListener('click', () => {
+    if(body.style.maxHeight) {
+      body.style.maxHeight = '';
+    } else {
+      body.style.maxHeight = body.scrollHeight + 'px';
+    }
+  });
+
+  // 更新总计函数
+  function updateTotal() {
+    let sum = 0;
+    body.querySelectorAll('.entry-btn').forEach(btn=>{
+      let parts = btn.innerText.split(' ');
+      sum += parseInt(parts[1]);
+    });
+    totalLabel.innerText = `共计${sum}/80`;
+  }
+
+  // 新建按钮内部添加entry
+  window.addEntry = function(btn) {
+    const body = btn.parentElement.previousElementSibling;
+    const entryName = prompt('请输入词条名称', '果');
+    if(!entryName) return;
+
+    const entryBtn = document.createElement('button');
+    entryBtn.className = 'pool-btn entry-btn';
+    entryBtn.innerText = entryName + ' 0';
+
+    // 词条计数点击
+    entryBtn.addEventListener('click', () => {
+      let [label,num] = entryBtn.innerText.split(' ');
+      num = parseInt(num)+1;
+      entryBtn.innerText = `${label} ${num}`;
+      updateTotal();
+    });
+
+    // 删除词条按钮
+    const delBtn = document.createElement('span');
+    delBtn.className = 'entry-delete';
+    delBtn.innerText = '×';
+    delBtn.onclick = (e)=>{
+      entryBtn.remove();
+      delBtn.remove();
+      updateTotal();
+      e.stopPropagation();
+    };
+    entryBtn.appendChild(delBtn);
+
+    body.appendChild(entryBtn);
+    body.style.maxHeight = body.scrollHeight + 'px';
+    updateTotal();
+  }
+}
+
+newPoolBtn.addEventListener('click', () => {
+  const name = prompt('请输入卡池名称', '柴渣虫');
+  if(name) createPool(name);
+});
+</script>
+</body>
+</html>
